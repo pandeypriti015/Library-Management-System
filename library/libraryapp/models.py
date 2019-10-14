@@ -53,11 +53,16 @@ class Record(models.Model):
     date_return = models.DateField(null=True)
     availability = models.BooleanField()
 
-    def __str__(self):
-        return self.book
+    def __self(self):
+        return self.name
 
-
-#class check(models.Model):
+    # def check(self,availability,book,book_stock):
+    #     if availability is True:
+    #         book.append=book_stock
+    #
+    #     else:
+    #         print("book_stock")
+    
 
 @receiver(post_save,sender=Barrower)
 def update_stock(sender,instance,**kwargs):
