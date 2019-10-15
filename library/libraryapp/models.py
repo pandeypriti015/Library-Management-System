@@ -1,60 +1,78 @@
 from django.db import models
 from django.dispatch import receiver
 from django.db.models.signals import post_save
-import datetime
+from datetime import date,timedelta
+from django.db.models import signals
 
 # Create your models here.
 class Book(models.Model):
     book_name = models.CharField(max_length=200)
     book_publisher = models.CharField(max_length=200)
     book_author = models.CharField(max_length=200)
-    book_stock = models.IntegerField(default=1)
+    in_stock = models.IntegerField(default=1)
+    availability =models.BooleanField(default=False)
+    number_of_copy =models.IntegerField(default=1)
+    book_discription = models.TextField(blank=True,null=True)
+
 
     def __str__(self):
         return self.book_name
 
-class Student(models.Model):
-    student_id = models.AutoField(primary_key=True)
-    student_name = models.CharField(max_length=100)
-    student_address = models.CharField(max_length=200)
-    student_number = models.IntegerField()
-    book_name = models.ForeignKey(Book,'on_delete=models.CASCADE')
-    date_of_issue = models.DateField(auto_now_add=True)
-    date_of_return = models.DateField(datetime.datetime.today()+datetime.timedelta(days=7))
+class Member(models.Model):
+    member_id = models.CharField(max_length=6)
+    member_name = models.CharField(max_length=100)
+    member_address = models.CharField(max_length=200)
+    member_phone_no = models.IntegerField()
+    member_email = models.EmailField()
+
 
     def __str__(self):
-        return self.student_name
+        return self.member_name
+
 
 class Author(models.Model):
-    author_id = models.AutoField(primary_key=True)
     author_name = models.CharField(max_length=100)
-    email = models.EmailField()
+    author_address = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.author_id
+        return self.author_name
 
 
 class Barrower(models.Model):
-    id = models.AutoField(primary_key=True)
-    card = models.ForeignKey(Student,'on_delete=model.CASCADE')
-    book = models.ForeignKey(Book,'on_delete=model.CASCADE')
-    issue_date = models.DateField(null=True)
-    due_date = models.DateField(null=True)
-    date_return = models.DateField(null=True)
-    availability = models.BooleanField()
+    borrowed_member= models.ForeignKey(Member,on_delete=models.CASCADE)
+    borrowed_book = models.DateField(auto_now_add =True)
+    borrowed_date = models.DateField(auto_now_add=True)
+    book_returned = models.BooleanField(auto_created=True, default=False)
+    return_date =models.DateField(default= date.today()+timedelta(days=7))
 
-    def __str__(self):
-        return self.id
+    def expired(self):
+        return_date = self.return_date
+        if date.today()>return_date:
+            return True
+        else:
+            return False
 
-class Record(models.Model):
-    name = models.ForeignKey(Student,'on_delete=model.CASCADE')
-    book = models.ForeignKey(Book,'on_delete=models.CASCADE')
-    date_issue = models.DateField(null=True)
-    date_return = models.DateField(null=True)
-    availability = models.BooleanField()
+    def is_returned(self):
+        if self.book_returned:
+            return True
+        else:
+            return False
 
-    def __self(self):
-        return self.name
+    is_returned.boolean = True
+    is_returned.short_description= 'Returned'
+    expired.boolean=True
+    expired.short_description= 'Expired'
+
+# class Record(models.Model):
+#     name = models.ForeignKey(Barrower,'on_delete=model.CASCADE')
+#     book = models.ForeignKey(Book,'on_delete=models.CASCADE')
+#     date_issue = models.DateField()
+#     due_date = models.DateField()
+#     is_returned = models.BooleanField()
+#     availability = models.BooleanField()
+#
+#     def __self(self):
+#         return self.name
 
     # def check(self,availability,book,book_stock):
     #     if availability is True:
@@ -62,11 +80,26 @@ class Record(models.Model):
     #
     #     else:
     #         print("book_stock")
-    
-
-@receiver(post_save,sender=Barrower)
-def update_stock(sender,instance,**kwargs):
-    instance.book.BookInstance -= instance.avalibility
-    instance.post.save()
 
 
+@receiver(post_save,sender = Barrower)
+def update_stock(sender,instance,created,**kwargs):
+    stock = instance.borrowed_book.in_stock
+    if not instance.book_returned:
+        if instance.borrowed_book.number_of_copy > stock:
+            stock +=1
+            book = instance.borrowed_book
+            instance.book_returned = True
+            book.in_stock = stock
+            book.save()
+
+
+@receiver(signals.post_save,sender = Barrower)
+def is_barrowed(sender,instance,created,**kwargs):
+    if not instance.book_returned:
+        if created:
+            stock = instance.Borrowed_book.in_stock
+            if stock > 0:
+                stock -= 1
+                book.in_stock = stock
+                book.save()
