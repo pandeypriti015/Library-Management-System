@@ -18,6 +18,9 @@ class Book(models.Model):
     def __str__(self):
         return self.book_name
 
+    def get_title(self):
+        return self.book_name
+
 class Member(models.Model):
     member_id = models.CharField(max_length=6)
     member_name = models.CharField(max_length=100)
@@ -37,10 +40,12 @@ class Author(models.Model):
     def __str__(self):
         return self.author_name
 
+    def get_title(self):
+        return self.author_name
 
-class Barrower(models.Model):
+class Borrows(models.Model):
     borrowed_member= models.ForeignKey(Member,on_delete=models.CASCADE)
-    borrowed_book = models.DateField(auto_now_add =True)
+    borrowed_book = models.ForeignKey(Book,on_delete=models.CASCADE)
     borrowed_date = models.DateField(auto_now_add=True)
     book_returned = models.BooleanField(auto_created=True, default=False)
     return_date =models.DateField(default= date.today()+timedelta(days=7))
@@ -63,43 +68,37 @@ class Barrower(models.Model):
     expired.boolean=True
     expired.short_description= 'Expired'
 
-# class Record(models.Model):
-#     name = models.ForeignKey(Barrower,'on_delete=model.CASCADE')
-#     book = models.ForeignKey(Book,'on_delete=models.CASCADE')
-#     date_issue = models.DateField()
-#     due_date = models.DateField()
-#     is_returned = models.BooleanField()
-#     availability = models.BooleanField()
-#
-#     def __self(self):
-#         return self.name
-
-    # def check(self,availability,book,book_stock):
-    #     if availability is True:
-    #         book.append=book_stock
-    #
-    #     else:
-    #         print("book_stock")
 
 
-@receiver(post_save,sender = Barrower)
+@receiver(post_save,sender = Borrows)
 def update_stock(sender,instance,created,**kwargs):
     stock = instance.borrowed_book.in_stock
     if not instance.book_returned:
-        if instance.borrowed_book.number_of_copy > stock:
+        if instance.borrowed_book.number_of_copy >= stock:
             stock +=1
             book = instance.borrowed_book
             instance.book_returned = True
             book.in_stock = stock
+            if stock > 0:
+                book.availability = True
             book.save()
 
 
-@receiver(signals.post_save,sender = Barrower)
+
+@receiver(signals.post_save,sender = Borrows)
 def is_barrowed(sender,instance,created,**kwargs):
     if not instance.book_returned:
         if created:
-            stock = instance.Borrowed_book.in_stock
+            stock = instance.borrowed_book.in_stock
             if stock > 0:
                 stock -= 1
+                book = instance.borrowed_book
                 book.in_stock = stock
+                if stock <= 0:
+                    book.availability = False
                 book.save()
+    else:
+        stock = instance.borrowed_book.in_stock
+        book = instance.borrowed_book
+        book.in_stock = stock+1
+        book.save()

@@ -1,7 +1,7 @@
 from django.contrib import admin
 
 # Register your models here.
-from .models import Book,Member,Author,Barrower
+from .models import Book,Member,Author,Borrows
 from django import forms
 
 class AuthorForm(forms.ModelForm):
@@ -52,7 +52,7 @@ class BorrowAdminform(forms.ModelForm):
     def save(self,commit=True):
         return super(BorrowAdminform,self).save(commit)
 
-class BarrowerAdmin(admin.ModelAdmin):
+class BorrowerAdmin(admin.ModelAdmin):
     list_display = ('borrowed_member','borrowed_book','borrowed_date','book_returned','return_date',)
     list_filter =('return_date',)
     search_fields = ('borrowed_member_member_name','borrowed_name','borrowed_number_member_id',)
@@ -61,6 +61,7 @@ class BarrowerAdmin(admin.ModelAdmin):
     form = BorrowAdminform
 
 class MemberAdminForm(forms.ModelForm):
+
     def __init__(self,*args,**kwargs):
         super(MemberAdminForm,self).__init__(*args,**kwargs)
     def clean(self):
@@ -68,14 +69,16 @@ class MemberAdminForm(forms.ModelForm):
         if len(member_name)<10:
             raise forms.ValidationError("Name is short",code= "invalid")
         return self.cleaned_data
+
+
 class MemberAdmin(admin.ModelAdmin):
     list_display = ('member_id','member_name','member_address',
                     'member_phone_no','member_email',)
     ordering = ('member_name',)
-    form=MemberAdminForm
+    form = MemberAdminForm
 
 admin.site.register(Book,BookAdmin)
 admin.site.register(Member,MemberAdmin)
 admin.site.register(Author,AuthorAdmin)
-admin.site.register(Barrower,BarrowerAdmin)
+admin.site.register(Borrows,BorrowerAdmin)
 
