@@ -8,7 +8,7 @@ Book is issued by the librarian and then has to be returned within a due date of
 
 Clone this repo in your system:
 
-git clone https://github.com/pandeypriti015/Library_Management_System.git
+git clone https://github.com/pandeypriti015/Library-Management-System.git
 
 Get inside the repo, type this is terminal:
 
